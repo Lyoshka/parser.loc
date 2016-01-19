@@ -1,6 +1,6 @@
 <?php
 //*****************************************************************************
-//  парсинг товаров сайта http://www.petshop.ru. Сайт BITRIX
+//  РїР°СЂСЃРёРЅРі С‚РѕРІР°СЂРѕРІ СЃР°Р№С‚Р° http://www.petshop.ru. РЎР°Р№С‚ BITRIX
 //  
 //*****************************************************************************
 
@@ -9,8 +9,8 @@
 		include_once('lib\simple_html_dom.php');
 
 		$site = 'http://www.petshop.ru';
-		//$url = 'http://www.petshop.ru/catalog/fish/';	//1-й уровень
-		$url = 'http://www.petshop.ru/catalog/cats/syxkor/';	//2-й уровень
+		//$url = 'http://www.petshop.ru/catalog/fish/';	//1-Р№ СѓСЂРѕРІРµРЅСЊ
+		$url = 'http://www.petshop.ru/catalog/cats/syxkor/';	//2-Р№ СѓСЂРѕРІРµРЅСЊ
 		
 		
 		$arr = get_page_count($url);
@@ -18,7 +18,7 @@
 		//var_dump($arr);
 		
 		
-function get_page_count($url){	//Функция определения кол-ва страниц с товарами
+function get_page_count($url){	//Р¤СѓРЅРєС†РёСЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ РєРѕР»-РІР° СЃС‚СЂР°РЅРёС† СЃ С‚РѕРІР°СЂР°РјРё
 	
 		global $site;
 		
@@ -49,7 +49,7 @@ function get_page_count($url){	//Функция определения кол-ва страниц с товарами
 	
 }
 		
-function get_lvl_1($url) {	//Функция получения массива ссылок 1-го уровня
+function get_lvl_1($url) {	//Р¤СѓРЅРєС†РёСЏ РїРѕР»СѓС‡РµРЅРёСЏ РјР°СЃСЃРёРІР° СЃСЃС‹Р»РѕРє 1-РіРѕ СѓСЂРѕРІРЅСЏ
 
 		$html = curl_get($url);
 		
@@ -74,7 +74,7 @@ function get_lvl_1($url) {	//Функция получения массива ссылок 1-го уровня
 			
 		}
 	
-	//Поучили 1-й уровень 
+	//РџРѕСѓС‡РёР»Рё 1-Р№ СѓСЂРѕРІРµРЅСЊ 
 	
 	return $arr_level_1;
 }
