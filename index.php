@@ -15,7 +15,7 @@
 		
 		$arr = get_page_count($url);
 		
-		var_dump($arr);
+		//var_dump($arr);
 		
 		
 function get_page_count($url){	//Функция определения кол-ва страниц с товарами
