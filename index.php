@@ -15,7 +15,7 @@
 		
 		$arr = get_page_count($url);
 		
-		//var_dump($arr);
+		var_dump($arr);
 		
 		
 function get_page_count($url){	//Функция определения кол-ва страниц с товарами
@@ -32,17 +32,32 @@ function get_page_count($url){	//Функция определения кол-в
 		
 		$pages = $dom->find('.page-navigation',0);
 		
-		if ($pages != null) {
+		if ($pages != null) {	//Проверяем наличие дополнительных страниц
 		
-				$container = $pages->find('a[class!="next"]');
+				if ($pages->find('a[class="dots"]') == null) {		//Проверяем наличие большого кол-ва страниц
 				
-				foreach($container as $item){
+						$container = $pages->find('a[class!="next"]');
+						
+						foreach($container as $item){
+							
+							//echo $item->href .  '<br>';
+							$arr_page[] = $site . $item->href;
+							
+						}
+				} else {	//Много страниц, присутствуют свернутые номера страниц
+				
+					$a = $pages->find('a[!class]',0); //Получили кол-во страниц с товарами
 					
-					//echo $item->href .  '<br>';
-					$arr_page[] = $site . $item->href;
+					$page_count = $a -> plaintext;
+					
+					for ($i=2;$i<=$page_count;$i++) {
+						
+						//echo $url . "?page=" . $i. "<br>";
+						$arr_page[] = $url . "?page=" . $i;
+						
+					}
 					
 				}
-		
 		}
 		
 		return $arr_page;
