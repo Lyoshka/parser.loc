@@ -9,9 +9,103 @@
 		include_once('lib\simple_html_dom.php');
 
 		//$url = 'http://www.petshop.ru/catalog/dogs/lezaki/';	
-		$url = 'http://ibody.ru/catalog/instrumenty/facial/';	
+		//$url = 'http://ibody.ru/catalog/instrumenty/facial/';	
+		$url = 'http://www.petshop.ru/catalog/dogs/kosti/hrustyashki/lakomstvo_dlya_sobak_vozdushnye_shariki_delizie_pcat207_22730/';
+
+		
+		$html = curl_get($url);
+
+		$dom = str_get_html($html);
+		
+		//************************************************
+		$container = $dom->find('.card-header h1',0);
+		
+		echo $container->plaintext . "<br>";
+		echo "************************************************************************<br>";	
+			
+		//************************************************
+		$container = $dom->find('.good-brand a',0);
+		
+		echo $container->plaintext . "<br>";
+		echo "************************************************************************<br>";	
+			
+		//************************************************
+		$container = $dom->find('.j_offer_price',0);
+					
+		echo $container->attr['value'] . "<br>";
+		echo "************************************************************************<br>";	
+			
+		//************************************************
+		$container = $dom->find('.type-inst',0);
+		
+		echo $container->plaintext . "<br>";
+		echo "************************************************************************<br>";	
+		
+		//************************************************
+		$container = $dom->find('div[id=product-features]',0);
+		
+		echo $container->outertext . "<br>";
+		echo "************************************************************************<br>";		
+		
+		//************************************************
+		$container = $dom->find('.char-item',0);
+		
+		echo $container->outertext . "<br>";
+		echo "************************************************************************<br>";	
+
+		//************************************************
+		$container = $dom->find('.review-elem');
+		
+		
+		foreach($container as $item){
+		
+				
+				$a = $item->find('.text-name',0);
+				
+				echo $a->outertext . "<br>";
+				
+				$a = $item->find('.review-body',0);
+				
+				echo $a->outertext . "<br>";
+				echo "---------------------------<br>";
+		
+			}
+		
+		
+		echo $container->outertext . "<br>";
+		echo "************************************************************************<br>";	
+		
+		
+		
+		//************************************************
+		$container = $dom->find('.product_photo',0);
+		
+		echo $container->src . "<br>";
+		echo "************************************************************************<br>";
+		
+		//************************************************
+		$container = $dom->find('.js-preview-img li a',0);
+		
+		echo $container->href . "<br>";
+		echo "************************************************************************<br>";
+
+		//************************************************
+		$container = $dom->find('.js-small-img li');
+		
+		foreach($container as $item){
+		
+				
+				$a = $item->find('img',0);
+				
+				echo $a->src . "<br>";
+				echo "---------------------------<br>";
+			}
+		
+		
+		
 		
 
+function list_item() {		
 		include_once('lib\sql.php');
 
 		// подключаемся к SQL серверу
@@ -35,7 +129,7 @@
 	
 		//Закрываем соединение с БД 
 		mysqli_close($link);
-		
+}		
 		
 function getItem($url) {
 	
