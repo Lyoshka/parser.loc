@@ -8,7 +8,8 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
-curl_query.php
+lib/curl_query.php
+test.php
 
 # Windows Installer files
 *.cab
