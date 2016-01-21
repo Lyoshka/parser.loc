@@ -1,6 +1,6 @@
 <?php
 	$host = 	'localhost'; 
-	$database = 	'test'; 
+	$database = 	'bitrixshop'; 
 	$user = 	'root'; 
 	$password = 	'uj73htw'; 
 
