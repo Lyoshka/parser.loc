@@ -9,7 +9,7 @@
 		include_once('lib\simple_html_dom.php');
 		
 		$k = 0;					// Индекс в массиве $arr_all по которому производимм выборку
-		$limit = "";//" LIMIT 120,20";	// Лимит выборки страниц (для тестирования), если надо выбрать все, то $limit = ""
+		$limit = "";			//" LIMIT 120,20";	// Лимит выборки страниц (для тестирования), если надо выбрать все, то $limit = ""
 		
 		$arr_all = array(
 			array("Товары для собак","http://www.petshop.ru/catalog/dogs/"),
@@ -31,7 +31,7 @@
 		//list_item($arr_all[$k][0]);
 		
 		
-		compare_tovar($arr_all[$k][0]);
+		//compare_tovar($arr_all[$k][0]);
 		
 function compare_tovar ($catalog_id) {		//Функция поиска новых товаров на сайте и скачки ID товара в таблицу "Товары на загрузку"
 	
@@ -59,19 +59,16 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 				
 				$commit = $commit + 1;	//Счетчик коммитов. Коммитим через 50 записей
 				
-				
-				//if (mysqli_num_rows($result) == 0) {
 				if ($result == 0) {
-					//$arr = mysqli_fetch_row($result);
 					
 					//Здесь инсертим в базу новые ID товаров для последующей загрузки
 					
 					$query = "INSERT INTO Bitrixshop.compare (`tovar_id`,`catalog`,`link`) VALUES ('" . $s1 . "','" . $s2 . "','" . $s3 . "')"; 
-					/*
+					
 					$res = mysqli_query($link, $query);
 					if (!$res) {
 						echo "Ошибка загрузки данных: " . $query . "<br>";
-					} */
+					} 
 					
 					if ($commit == 51) {
 						$query = "COMMIT";

@@ -5,12 +5,12 @@ function curl_get($url, $referer = 'http://www.google.com') {
 //$proxy = '117.136.234.8:81';
 //$proxy = '121.199.25.64:81';
 //$proxy = '141.101.118.191:80';
-$proxy = '188.165.141.151:80';  	//Finland
+//$proxy = '188.165.141.151:80';  	//Finland
 
 
 
-//$proxy = '10.247.19.22:9090';
-//$proxyauth = 'spb\eav:recf40vehf}|';
+$proxy = '10.247.19.22:9090';
+$proxyauth = 'spb\eav:recf40vehf}|';
 
 $header  = array
 (
@@ -27,7 +27,7 @@ $header  = array
 	curl_setopt($ch, CURLOPT_REFERER, $referer);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_PROXY, $proxy);
-//      curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxyauth);
+	curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxyauth);
 	
 	$data = curl_exec($ch);
 	curl_close($ch);
