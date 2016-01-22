@@ -139,13 +139,11 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 			
 		}
 		
-		
 		//echo "************************************************************************<br>";	
 			
 		//************************************************
 		// Артикулы товара
 		$container = $dom->find('.card-choice ul li');
-		
 		
 		foreach($container as $item){
 		
@@ -167,7 +165,6 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 				$arr_art["price"] = (int) $a->attr['value'];
 				//echo $a->attr['value'] . " руб.<br>";
 
-				
 				//var_dump($arr_art);
 				save_art_to_SQL($arr_art);
 				//echo "---------------------------<br>";
@@ -198,9 +195,7 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 		/*
 		$container = $dom->find('.review-elem');
 		
-		
 		foreach($container as $item){
-		
 				
 				$a = $item->find('.text-name',0);
 				
@@ -213,11 +208,9 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 		
 			}
 		
-		
 		echo $container->outertext . "<br>";
 		echo "************************************************************************<br>";	
 		*/
-		
 		
 		//************************************************
 		// Главная картинка
@@ -232,7 +225,6 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 		//************************************************
 		// Картинки большие и средние
 		$container = $dom->find('.js-preview-img li a');
-		
 				
 			foreach($container as $item){
 					
@@ -257,7 +249,6 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 					save_img ($img);
 				};
 				//echo "---------------------------<br>";
-				
 				
 				
 			}
@@ -364,7 +355,7 @@ function list_item($catalog) {		// Функция сбора ID товара п�
 		// подключаемся к SQL серверу
 		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
 	
-			$query = 'select s3, id_cat from bitrixshop.catalog where s1 = "' . $catalog . '"' . $limit; //Не забыть убрать ЛИМИТ
+			$query = 'select s3, id_cat from bitrixshop.load_catalog where s1 = "' . $catalog . '"' . $limit; //Не забыть убрать ЛИМИТ
 			$result = mysqli_query($link, $query);
 			
 			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
