@@ -52,7 +52,7 @@
 			$arr_cat_link = $arr_link[$j][1];
 			$id_max = $id_max + 1;
 			
-			//Сохраняем каталог
+			//Сохраняем каталог Catalog
 			save_catalog ($id_max,$arr_all[$cat][0],$name);
 			
 			for ($i=0;$i<count($arr_cat_link);$i++) {

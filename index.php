@@ -4,6 +4,8 @@
 //  Файл №2. Парсинг товаров
 //*****************************************************************************
 		
+		set_time_limit(0);		//Убираем лимит работы скрипта PHP
+		
 		include_once('lib\sql.php');
 		include_once('lib\curl_query.php');
 		include_once('lib\simple_html_dom.php');
@@ -28,10 +30,19 @@
 	
 		//get_tovar($url);
 	
-		//list_item($arr_all[$k][0]);
+		//$arr = list_item(6);
 		
+		ob_start();
 		
-		//compare_tovar($arr_all[$k][0]);
+		for ($i=6;$i<=42;$i++) {
+			
+			compare_tovar($i);
+			ob_flush();
+			flush();
+		}
+		
+		ob_end_clean(); 
+
 		
 function compare_tovar ($catalog_id) {		//Функция поиска новых товаров на сайте и скачки ID товара в таблицу "Товары на загрузку"
 	
@@ -54,7 +65,7 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 				$s2   = $arr_tovar[$j]["catalog_id"];
 				$s3   = $arr_tovar[$j]["link"];
 			
-				$query = 'select exist (select 1 from bitrixshop.tovar where tovar_id = ' . $s1 . ')'; // Ищен ID товара в таблице Tovar если не найден, то добавляем в таблицу Compare
+				$query = 'select exist (select 1 from bitrixshop.tovar where tovar_id = ' . $s1 . ')'; // Ищем ID товара в таблице Tovar если не найден, то добавляем в таблицу Compare
 				$result = mysqli_query($link, $query);
 				
 				$commit = $commit + 1;	//Счетчик коммитов. Коммитим через 50 записей
@@ -74,14 +85,15 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 						$query = "COMMIT";
 						$res = mysqli_query($link, $query);
 						$commit = 0;
-						echo $i . "<br>";
+						flush();
+						//echo $i . "<br>";
 					}
 					
 				}
 				$i = $i + 1;
 				
 			}
-		echo "ALL: " . $i ;
+		echo "Catalog: " . $s2 . " всего товаров: " . $i . "<br>";
 		//Закрываем соединение с БД 
 		mysqli_close($link);
 	
@@ -355,13 +367,13 @@ function list_item($catalog) {		// Функция сбора ID товара п�
 		// подключаемся к SQL серверу
 		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
 	
-			$query = 'select s3, id_cat from bitrixshop.load_catalog where s1 = "' . $catalog . '"' . $limit; //Не забыть убрать ЛИМИТ
+			$query = 'select link from bitrixshop.load_catalog where id_cat = "' . $catalog . '"' . $limit; //Не забыть убрать ЛИМИТ
 			$result = mysqli_query($link, $query);
 			
 			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 				
 				//echo $row['s3'] . "<br>";
-				$arr_art = getItem($row['s3'],$row['id_cat']);
+				$arr_art = getItem($row['link'],$catalog);
 				
 				
 								
