@@ -4,6 +4,8 @@
 //  Файл №1. Парсинг категорий
 //*****************************************************************************
 
+		set_time_limit(0);		//Убираем лимит работы скрипта PHP
+		
 		include_once('lib\sql.php');
 		include_once('lib\curl_query.php');
 		include_once('lib\simple_html_dom.php');
@@ -11,7 +13,8 @@
 		$site = 'http://www.petshop.ru';
 		$url = 'http://www.petshop.ru/catalog/birds/';	//1-й уровень
 		
-		$cat = 4;		//Номер в массиве категорий $arr_all который будем обрабатывать
+		//$cat = 4;		//Номер в массиве категорий $arr_all который будем обрабатывать
+	
 		
 		$arr_all = array(
 			array("1","Товары для собак","http://www.petshop.ru/catalog/dogs/"),
@@ -22,11 +25,20 @@
 		);
 		
 	
-		$arr_to_sql = array();
+		
+		
+		ob_start();
+		echo "Start script: " . date("H:i:s") . "<br>";
+		ob_flush();
+		flush();
+		
+	for ($cat=0;$cat<5;$cat++) {
 		
 		$arr_link = get_category ($arr_all[$cat][2]);
 		
+		
 		$k = 0;
+		$arr_to_sql = array();
 		
 		
 		// подключаемся к SQL серверу
@@ -41,16 +53,18 @@
 				$id_max = $row["count"];
 				
 		}
+		mysqli_free_result($result);
 		
 		//Закрываем соединение с БД 
 		mysqli_close($link);
 
-
+		
 		for ($j=0;$j<count($arr_link);$j++) {		
 		
 			$name = $arr_link[$j][0];
 			$arr_cat_link = $arr_link[$j][1];
 			$id_max = $id_max + 1;
+			
 			
 			//Сохраняем каталог Catalog
 			save_catalog ($id_max,$arr_all[$cat][0],$name);
@@ -63,15 +77,20 @@
 				$arr_to_sql[$k][3] = $arr_cat_link[$i];				//Ссылка на страницу
 				
 				$k = $k + 1;
+				
 			}
+			
 		
 		}
-
 		
 		save_load_catalog($arr_to_sql);
-		//var_dump($arr_to_sql);
-		//var_dump($arr_link);
+		echo "Catalog:" . $cat . " load: " . $k . " <br>";
+		ob_flush();
+		flush();
 
+	}	
+	ob_end_clean(); 
+	echo "End script: " . date("H:i:s");
 		
 function save_catalog ($cat_id,$par_id,$name) {		//Функция сохранения каталога
 	
@@ -85,8 +104,8 @@ function save_catalog ($cat_id,$par_id,$name) {		//Функция сохране
 
 
 			$query = "INSERT INTO bitrixshop.catalog (`id_cat`,`parent_id`,`name`) VALUES ('" . $cat_id . "','" . $par_id . "','" . $name . "');";
-			$res = mysqli_query($link,$query);
-			if (!$res) {
+			$result = mysqli_query($link,$query);
+			if (!$result) {
 				echo "Ошибка загрузки данных: " . $query . "<br>";
 			}
 
@@ -107,27 +126,28 @@ function save_load_catalog($arr) {		//Функция сохранения кат
 		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
  
 		$i = 0;
-
+		
 		for ($j=0;$j<count($arr);$j++){
 			$s1 = mysqli_real_escape_string($link,$arr[$i][0]);
 			$s2 = mysqli_real_escape_string($link,$arr[$i][1]);
 			$s3 = mysqli_real_escape_string($link,$arr[$i][2]);
 			$s4 = mysqli_real_escape_string($link,$arr[$i][3]);
+			
+			
 
 			//Сохраняем в таблицу ссылок на страницы каталога
 			$query = "INSERT INTO bitrixshop.load_catalog (`id_cat`,`parent_id`,`lvl1`,`link`) VALUES ('" . $s1 . "','" . $s2 . "','" . $s3. "','" . $s4 . "');";
-			$res = mysqli_query($link,$query);
-			if ($res) {
+			$result = mysqli_query($link,$query);
+			if ($result) {
 				$i = $i+1; 
 			} else {
 				echo "Ошибка загрузки данных: " . $query . "<br>";
 			}
-
 			
 		}
 
 
-		echo "В БД загружено " . $i . " записей";
+		//echo "В БД загружено " . $i . " записей";
 		
 		//Закрываем соединение с БД 
 		mysqli_close($link);
@@ -168,6 +188,8 @@ function get_page_count($url){	//Функция определения кол-в
 		
 		$dom = str_get_html($html);
 		
+	if ($dom != null) {
+		
 		$pages = $dom->find('.page-navigation',0);
 
 		
@@ -197,6 +219,10 @@ function get_page_count($url){	//Функция определения кол-в
 				}
 		}
 		
+	} else {	
+		echo "Function: get_page_count(). Нет данных HTML на входе. DOM = NULL <br>";
+	}
+	
 		return $arr_page;
 	
 }
@@ -210,6 +236,8 @@ function get_lvl_1($url) {	//Функция получения массива с
 		$arr_level_1 = array($arr_level11);
 		
 		$dom = str_get_html($html);
+		
+	if ($dom != null) {
 		
 		$container = $dom->find('.submenu-list a');
 		
@@ -226,7 +254,9 @@ function get_lvl_1($url) {	//Функция получения массива с
 				$i = $i + 1;
 			
 		}
-	
+	} else {
+		echo "Function: get_lvl_1(). Нет данных HTML на входе. DOM = NULL <br>";
+	}
 	//Поучили 1-й уровень 
 	
 	return $arr_level_1;
