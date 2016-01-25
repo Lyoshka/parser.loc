@@ -10,6 +10,8 @@
 		include_once('lib\curl_query.php');
 		include_once('lib\simple_html_dom.php');
 		
+		$save_dir = 'D:/OpenServer/domains/parser.loc/img/';		//Директория для сохранения файлов
+		
 		$k = 0;					// Индекс в массиве $arr_all по которому производимм выборку
 		$limit = "";			//" LIMIT 120,20";	// Лимит выборки страниц (для тестирования), если надо выбрать все, то $limit = ""
 		
@@ -21,20 +23,41 @@
 			array("Товары для птиц","http://www.petshop.ru/catalog/birds/")
 		);
 
-		$site = 'http://www.petshop.ru';
+		$site = 'http://www.petshop.ru';	
+		$url = 'http://www.petshop.ru/catalog/dogs/syxoi/vzroslye_1_6let/new_dlya_vzroslyh_sobak_malyh_porod_do_10_kg_10mes_8let_mini_adult_892/';
+	
 
-		//$url = 'http://www.petshop.ru/catalog/dogs/lezaki/';	
-		//$url = 'http://ibody.ru/catalog/instrumenty/facial/';	
-		//$url = 'http://www.petshop.ru/catalog/rodents/syxkor/korm_dlya_karlikovyh_krolikov_mixture_for_dwarfrabbits_3110071_31499/';
+//*******************************************************************************************************
+//	Процедура копирования карточек товаров 
+//*******************************************************************************************************
+		ob_start();
+
+		// подключаемся к SQL серверу
+		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
+		$id_catalog = 6;
+
+		$query = 'select tovar_id,catalog,parent_id,link from bitrixshop.compare where catalog = ' . $id_catalog . ' LIMIT 5'; 
+		$result = mysqli_query($link, $query);
+
+		while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+
+			get_tovar($row['link'],$row['tovar_id'],$row['catalog'],$row['parent_id']);
+				
+		}
+
 		
+		//Закрываем соединение с БД 
+		mysqli_close($link);
+			
+		ob_end_clean(); 
 	
-		//get_tovar($url);
-	
-		//$arr = list_item(6);
-		
+//*******************************************************************************************************
+//	Процедура сравнения товаров (поиск новых товаров и добавления в "таблицу готовых к загрузке")
+//*******************************************************************************************************
+/*
 		ob_start();
 		
-		for ($i=6;$i<=42;$i++) {
+		for ($i=6;$i<=42;$i++) {  // 6 - 42 каталоги по каторым необходимо произвести сравнение
 			
 			compare_tovar($i);
 			ob_flush();
@@ -42,6 +65,10 @@
 		}
 		
 		ob_end_clean(); 
+		
+*/
+
+//*******************************************************************************************************
 
 		
 function compare_tovar ($catalog_id) {		//Функция поиска новых товаров на сайте и скачки ID товара в таблицу "Товары на загрузку"
@@ -64,6 +91,7 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 				$s1   = $arr_tovar[$j]["tovar_id"];
 				$s2   = $arr_tovar[$j]["catalog_id"];
 				$s3   = $arr_tovar[$j]["link"];
+				$s4	  = $arr_tovar[$j]["parent_id"];
 			
 				$query = 'select exist (select 1 from bitrixshop.tovar where tovar_id = ' . $s1 . ')'; // Ищем ID товара в таблице Tovar если не найден, то добавляем в таблицу Compare
 				$result = mysqli_query($link, $query);
@@ -74,7 +102,7 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 					
 					//Здесь инсертим в базу новые ID товаров для последующей загрузки
 					
-					$query = "INSERT INTO Bitrixshop.compare (`tovar_id`,`catalog`,`link`) VALUES ('" . $s1 . "','" . $s2 . "','" . $s3 . "')"; 
+					$query = "INSERT INTO Bitrixshop.compare (`tovar_id`,`parent_id`,`catalog`,`link`) VALUES ('" . $s1 . "','" . $s4 . "','" . $s2 . "','" . $s3 . "')"; 
 					
 					$res = mysqli_query($link, $query);
 					if (!$res) {
@@ -101,9 +129,9 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 	
 		
 function save_img ($img_url) {		//Функция скачивания файла изображения
+		
+		global $save_dir;
 
-
-		$save_dir = 'D:/OpenServer/domains/parser.loc/img/';		//Директория для сохранения файлов
 				
 		$img_file = curl_get($img_url);
 		
@@ -111,7 +139,7 @@ function save_img ($img_url) {		//Функция скачивания файла
 		
 }
 		
-function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга катрочки товара
+function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		// Функция парсинга катрочки товара
 
 		$img_download = false;	// Скачивать картинки или нет
 		$arr_tovar = array();	// Массив товаров
@@ -123,6 +151,8 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 		$dom = str_get_html($html);
 		
 		$arr_tovar["tovar_id"] = $tovar_id;
+		$arr_tovar["catalog_id"] = $catalog_id;
+		$arr_tovar["parent_id"] = $parent_id;
 		
 		//************************************************
 		// Наименование
@@ -139,14 +169,14 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 		
 		if ($container != null) {
 
-			$arr_tovar["brend"] = $container->attr['title'];
+			$arr_tovar["brand"] = trim($container->attr['title']);
 			//echo $container->attr['title'] . "<br>";
 			
 		} else {
 
 			$container = $dom->find('.good-brand a',0);
 			
-			$arr_tovar["brend"] = $container->plaintext;
+			$arr_tovar["brand"] = trim($container->plaintext);
 			//echo $container->plaintext . "<br>";
 			
 		}
@@ -230,7 +260,7 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 		
 		$img = "http:" . $container->src;
 		
-		$arr_tovar["img_main"] = basename($img);
+		$arr_tovar["img_main"] = "catalog/" . basename($img);
 		//echo $img . "<br>";
 		//echo "************************************************************************<br>";
 		
@@ -242,7 +272,7 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 					
 				$img = "http:" . $item->href;
 				
-				$img_big = $img_big . basename($img) . "|";
+				$img_big = $img_big . "catalog/" . basename($img) . "|";
 				//echo $img . "<br>";
 				
 				if ($img_download) {
@@ -255,7 +285,7 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 				
 				$img = "http:" . $a->src;
 				
-				$img_med = $img_med . basename($img) . "|";
+				$img_med = $img_med . "catalog/" . basename($img) . "|";
 				//echo $img . "<br>";
 				if ($img_download) {
 					save_img ($img);
@@ -279,7 +309,7 @@ function get_tovar ($url, $tovar_id = '0') {		// Функция парсинга
 					
 					$img = "http:" . $a->src;
 					
-					$img_small = $img_small . basename($img) . "|";
+					$img_small = $img_small . "catalog/" . basename($img) . "|";
 					//echo $img . "<br>";
 					if ($img_download) {
 						save_img ($img);
@@ -340,10 +370,17 @@ function save_tovar_to_SQL ($arr) {		//Функция сохранения в Б
 		$s7 = mysqli_real_escape_string($link,$arr["img_big"]);
 		$s8 = mysqli_real_escape_string($link,$arr["img_med"]);
 		$s9 = mysqli_real_escape_string($link,$arr["img_small"]);
-
-		$query = "INSERT INTO Bitrixshop.tovar (`tovar_id`,`name`,`brand`,`memo1`,`memo2`,`img_main`,`img_big`,`img_med`,`img_small`) VALUES ('" . $s1 . "','" . $s2 . "','" . $s3 . "','" . $s4 . "','" . $s5 . "','" . $s6 . "','" . $s7 . "','" . $s8 . "','" . $s9 . "')";
+		$s10 = mysqli_real_escape_string($link,$arr["catalog_id"]);
+		$s11 = mysqli_real_escape_string($link,$arr["parent_id"]);
+		
+		
+		$query = "INSERT INTO Bitrixshop.tovar (`tovar_id`,`catalog_id`,`parent_id`,`name`,`brand`,`memo1`,`memo2`,`img_main`,`img_big`,`img_med`,`img_small`) VALUES ('" . $s1 . "','" . $s10 . "','" . $s11 . "','" . $s2 . "','" . $s3 . "','" . $s4 . "','" . $s5 . "','" . $s6 . "','" . $s7 . "','" . $s8 . "','" . $s9 . "')";
 		$res = mysqli_query($link,$query);
-		if (!$res) {
+		if ($res) {
+			// Удаляем из таблицы "На загрузку" (Compare)
+			$query = "DELETE FROM Bitrixshop.Compare WHERE tovar_id = " . s1;
+			//$res = mysqli_query($link,$query);
+		} else {
 			echo "Ошибка загрузки данных: " . $query . "<br>";
 		}
 
@@ -367,27 +404,28 @@ function list_item($catalog) {		// Функция сбора ID товара п�
 		// подключаемся к SQL серверу
 		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
 	
-			$query = 'select link from bitrixshop.load_catalog where id_cat = "' . $catalog . '"' . $limit; //Не забыть убрать ЛИМИТ
+			$query = 'select link, parent_id from bitrixshop.load_catalog where id_cat = "' . $catalog . '"' . $limit; //Не забыть убрать ЛИМИТ
 			$result = mysqli_query($link, $query);
 			
 			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 				
 				//echo $row['s3'] . "<br>";
 				$arr_art = getItem($row['link'],$catalog);
-				
-				
+				$parent_id = $row['parent_id'];
 								
 				for($j=0;$j<count($arr_art);$j++) {
 					
 					$s1 = $arr_art[$j]["tovar_id"];
 					$s2 = $arr_art[$j]["catalog_id"];
 					$s3 = $arr_art[$j]["link"];
+					$s4 = $parent_id;
 					
 
 				
-					$arr[] = array("tovar_id" => $s1,
-									"catalog_id" => $s2,
-									"link" => $s3);
+					$arr[] = array("tovar_id" 		=> $s1,
+									"catalog_id" 	=> $s2,
+									"link" 			=> $s3,
+									"parent_id" 	=> $s4);
 					
 				}
 				

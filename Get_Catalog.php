@@ -110,12 +110,12 @@ function save_load_catalog($arr) {		//Функция сохранения кат
 
 		for ($j=0;$j<count($arr);$j++){
 			$s1 = mysqli_real_escape_string($link,$arr[$i][0]);
-			//$s2 = mysqli_real_escape_string($link,$arr[$i][1]);
-			$s2 = mysqli_real_escape_string($link,$arr[$i][2]);
-			$s3 = mysqli_real_escape_string($link,$arr[$i][3]);
+			$s2 = mysqli_real_escape_string($link,$arr[$i][1]);
+			$s3 = mysqli_real_escape_string($link,$arr[$i][2]);
+			$s4 = mysqli_real_escape_string($link,$arr[$i][3]);
 
 			//Сохраняем в таблицу ссылок на страницы каталога
-			$query = "INSERT INTO bitrixshop.load_catalog (`id_cat`,`lvl1`,`link`) VALUES ('" . $s1 . "','" . $s2 . "','" . $s3 . "');";
+			$query = "INSERT INTO bitrixshop.load_catalog (`id_cat`,`parent_id`,`lvl1`,`link`) VALUES ('" . $s1 . "','" . $s2 . "','" . $s3. "','" . $s4 . "');";
 			$res = mysqli_query($link,$query);
 			if ($res) {
 				$i = $i+1; 
@@ -179,7 +179,6 @@ function get_page_count($url){	//Функция определения кол-в
 						
 						foreach($container as $item){
 							
-							//echo $item->href .  '<br>';
 							$arr_page[] = $site . $item->href;
 							
 						}
@@ -191,7 +190,6 @@ function get_page_count($url){	//Функция определения кол-в
 					
 					for ($i=2;$i<=$page_count;$i++) {
 						
-						//echo $url . "?page=" . $i. "<br>";
 						$arr_page[] = $url . "?page=" . $i;
 						
 					}
