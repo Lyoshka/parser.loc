@@ -89,7 +89,7 @@
 		flush();
 
 	}	
-	ob_end_clean(); 
+	//ob_end_clean(); 
 	echo "End script: " . date("H:i:s");
 		
 function save_catalog ($cat_id,$par_id,$name) {		//Функция сохранения каталога

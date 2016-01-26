@@ -11,6 +11,8 @@
 		include_once('lib\simple_html_dom.php');
 		
 		$save_dir = 'D:/OpenServer/domains/parser.loc/img/';		//Директория для сохранения файлов
+		$img_download = false;	// Скачивать картинки или нет		
+		
 		
 		$k = 0;					// Индекс в массиве $arr_all по которому производимм выборку
 		$limit = "";			//" LIMIT 120,20";	// Лимит выборки страниц (для тестирования), если надо выбрать все, то $limit = ""
@@ -42,6 +44,8 @@
 		while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 
 			get_tovar($row['link'],$row['tovar_id'],$row['catalog'],$row['parent_id']);
+			ob_flush();
+			flush();
 				
 		}
 
@@ -141,7 +145,7 @@ function save_img ($img_url) {		//Функция скачивания файла
 		
 function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		// Функция парсинга катрочки товара
 
-		$img_download = false;	// Скачивать картинки или нет
+		global $img_download;
 		$arr_tovar = array();	// Массив товаров
 		$arr_art = array();		// Массив артукулов
 		
@@ -177,60 +181,23 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
 			$container = $dom->find('.good-brand a',0);
 			
 			$arr_tovar["brand"] = trim($container->plaintext);
-			//echo $container->plaintext . "<br>";
 			
 		}
 		
-		//echo "************************************************************************<br>";	
 			
-		//************************************************
-		// Артикулы товара
-		$container = $dom->find('.card-choice ul li');
-		
-		foreach($container as $item){
-		
-				$arr_art["tovar_id"] = $tovar_id;	//ID товара
-				
-				$a = $item->find('.type-inst',0);	//Масса
-				
-				$arr_art["mass"] = $a->plaintext;
-				//echo $a->plaintext . "<br>";
-				
-				$a = $item->find('.good-id',0);		//Артикул
-				
-				list($artikul) = sscanf($a->plaintext, "артикул: %d");	//Вырезаем из строки артикул
-				$arr_art["artikul"] = $artikul;
-				//echo $a->plaintext . "<br>";
 
-				$a = $item->find('.price-new .offer_price',0);	//Цена
-				
-				$arr_art["price"] = (int) $a->attr['value'];
-				//echo $a->attr['value'] . " руб.<br>";
-
-				//var_dump($arr_art);
-				save_art_to_SQL($arr_art);
-				//echo "---------------------------<br>";
-				
-			}
-		
-		//echo "************************************************************************<br>";	
-			
 		
 		//************************************************
 		// Описание
 		$container = $dom->find('div[id=product-features]',0);
 		
 		$arr_tovar["memo1"] = $container->outertext;
-		//echo $container->outertext . "<br>";
-		//echo "************************************************************************<br>";		
 		
 		//************************************************
 		// Состав
 		$container = $dom->find('.char-item',0);
-		
+	
 		$arr_tovar["memo2"] = $container->outertext;
-		//echo $container->outertext . "<br>";
-		//echo "************************************************************************<br>";	
 
 		//************************************************
 		// Отзывы
@@ -251,7 +218,7 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
 			}
 		
 		echo $container->outertext . "<br>";
-		echo "************************************************************************<br>";	
+
 		*/
 		
 		//************************************************
@@ -261,8 +228,6 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
 		$img = "http:" . $container->src;
 		
 		$arr_tovar["img_main"] = "catalog/" . basename($img);
-		//echo $img . "<br>";
-		//echo "************************************************************************<br>";
 		
 		//************************************************
 		// Картинки большие и средние
@@ -270,33 +235,43 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
 				
 			foreach($container as $item){
 					
+				
 				$img = "http:" . $item->href;
 				
-				$img_big = $img_big . "catalog/" . basename($img) . "|";
+				if ($img_big != null) {
+					$separator = "|";
+				} else {
+					$separator = "";
+				}
+				
+				$img_big = $img_big . $separator . "catalog/" . basename($img);
 				//echo $img . "<br>";
 				
 				if ($img_download) {
 					save_img ($img);
 				};
-				
-				//echo "---------------------------<br>";
 				
 				$a = $item->find('img',0);
 				
 				$img = "http:" . $a->src;
+
+				if ($img_med != null) {
+					$separator = "|";
+				} else {
+					$separator = "";
+				}
 				
-				$img_med = $img_med . "catalog/" . basename($img) . "|";
+				$img_med = $img_med . $separator . "catalog/" . basename($img) ;
 				//echo $img . "<br>";
 				if ($img_download) {
 					save_img ($img);
 				};
-				//echo "---------------------------<br>";
 				
 				
 			}
 		$arr_tovar["img_big"] = $img_big;
 		$arr_tovar["img_med"] = $img_med;
-		//echo "************************************************************************<br>";
+
 
 		//************************************************
 		// Галерея картинок (маленькие)
@@ -309,21 +284,75 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
 					
 					$img = "http:" . $a->src;
 					
-					$img_small = $img_small . "catalog/" . basename($img) . "|";
-					//echo $img . "<br>";
-					if ($img_download) {
-						save_img ($img);
-					};
-					//echo "---------------------------<br>";
+					if ($img_small != null) {
+						$separator = "|";
+					} else {
+						$separator = "";
+					}
+
+					if (basename($img) != "0.jpg") {
+					
+						$img_small = $img_small . $separator . "catalog/" . basename($img) ;
+						
+						if ($img_download) {
+							save_img ($img);
+						};
+					
+					}
+	
 				}
 			$arr_tovar["img_small"] = $img_small;
 		
-		//var_dump($arr_tovar);
-		save_tovar_to_SQL($arr_tovar);
+
+		//************************************************
+		// Артикулы товара
+		$container = $dom->find('.card-choice ul li');
+		
+		foreach($container as $item){
+		
+				//$arr_art["tovar_id"] = $tovar_id;	//ID товара
+				
+				
+				$a = $item->find('.type-inst',0);	
+				
+				//$arr_art["mass"] = $a->plaintext;
+				
+				$massa = $a->plaintext;
+				
+				if ($massa <= 100) {
+					$arr_tovar["weight"] = $a->plaintext;			//Масса
+				} else {
+					$arr_tovar["weight"] = $a->plaintext / 1000;
+				}
+				
+				
+				//***********************************
+				//$a = $item->find('.good-id',0);				//Артикул
+				
+				//list($artikul) = sscanf($a->plaintext, "артикул: %d");	//Вырезаем из строки артикул
+				//$arr_art["artikul"] = $artikul;
+				
+				//************************************
+
+				$a = $item->find('.price-new .offer_price',0);	
+				
+				//$arr_art["price"] = (int) $a->attr['value'];
+				$arr_tovar["price"] = (int) $a->attr['value'];	//Цена
+
+				//save_art_to_SQL($arr_art);
+				
+				save_tovar_to_SQL($arr_tovar);
+
+			}
+
+
+		
+		
 		
 	
 }		
 
+/*
 function save_art_to_SQL ($arr) {		//Функция сохранения в БД артукулов
 	
 		global $host;
@@ -351,6 +380,8 @@ function save_art_to_SQL ($arr) {		//Функция сохранения в БД
 
 }
 
+*/
+
 function save_tovar_to_SQL ($arr) {		//Функция сохранения в БД товаров
 	
 		global $host;
@@ -372,9 +403,11 @@ function save_tovar_to_SQL ($arr) {		//Функция сохранения в Б
 		$s9 = mysqli_real_escape_string($link,$arr["img_small"]);
 		$s10 = mysqli_real_escape_string($link,$arr["catalog_id"]);
 		$s11 = mysqli_real_escape_string($link,$arr["parent_id"]);
+		$s12 = mysqli_real_escape_string($link,$arr["weight"]);
+		$s13 = mysqli_real_escape_string($link,$arr["price"]);
 		
 		
-		$query = "INSERT INTO Bitrixshop.tovar (`tovar_id`,`catalog_id`,`parent_id`,`name`,`brand`,`memo1`,`memo2`,`img_main`,`img_big`,`img_med`,`img_small`) VALUES ('" . $s1 . "','" . $s10 . "','" . $s11 . "','" . $s2 . "','" . $s3 . "','" . $s4 . "','" . $s5 . "','" . $s6 . "','" . $s7 . "','" . $s8 . "','" . $s9 . "')";
+		$query = "INSERT INTO Bitrixshop.tovar (`tovar_id`,`catalog_id`,`parent_id`,`name`,`brand`,`memo1`,`memo2`,`img_main`,`img_big`,`img_med`,`img_small`,`weight`,`price`) VALUES ('" . $s1 . "','" . $s10 . "','" . $s11 . "','" . $s2 . "','" . $s3 . "','" . $s4 . "','" . $s5 . "','" . $s6 . "','" . $s7 . "','" . $s8 . "','" . $s9 . "','" . $s12 . "','" . $s13 . "')";
 		$res = mysqli_query($link,$query);
 		if ($res) {
 			// Удаляем из таблицы "На загрузку" (Compare)

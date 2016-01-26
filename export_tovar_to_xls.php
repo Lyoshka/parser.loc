@@ -91,18 +91,20 @@ $arr = SQL_get_catalog();
 		
 
 		$objPHPExcel->setActiveSheetIndex(0)
-				->setCellValue('A'.$i, $arr[$j]["tovar_id"])
+				->setCellValue('A'.$i, $arr[$j]["id"] + 100)
 				->setCellValue('B'.$i, $arr[$j]["name"])
 				->setCellValue('C'.$i, $arr[$j]["name"])
 				->setCellValue('D'.$i, (string) $s1 . "," . (string) $s2)
 				->setCellValue('L'.$i, '100')
+				->setCellValue('M'.$i, $arr[$j]["tovar_id"])
 				->setCellValue('N'.$i, $arr[$j]["brand"])
-				->setCellValue('O'.$i, '0')
+				->setCellValue('O'.$i, $arr[$j]["img_main"])
 				->setCellValue('P'.$i, 'yes')
-				->setCellValue('Q'.$i, '100')
+				->setCellValue('Q'.$i, $arr[$j]["price"])
 				->setCellValue('S'.$i, date('Y-m-d H:i:s'))
 				->setCellValue('T'.$i, date('Y-m-d H:i:s'))
 				->setCellValue('U'.$i, date('Y-m-d'))
+				->setCellValue('V'.$i, $arr[$j]["weight"])
 				->setCellValue('AB'.$i, 'true')
 				->setCellValue('AB'.$i, 'true')
 				->setCellValue('AC'.$i, '0')
@@ -131,6 +133,29 @@ $objPHPExcel->setActiveSheetIndex(1)
             ->setCellValue('A1', 'product_id')
             ->setCellValue('B1', 'image')
             ->setCellValue('C1', 'sort_order');
+
+		$i = 2;
+		
+	// Заполняем данные
+		for($j=0;$j<count($arr);$j++) {
+
+			$arr_img = array();
+			
+			$arr_img = img_pars($arr[$j]["img_med"]);
+
+			for($k=0;$k<count($arr_img);$k++) {
+				$objPHPExcel->setActiveSheetIndex(1)
+						->setCellValue('A'.$i, $arr[$j]["id"] + 100 )
+						->setCellValue('B'.$i, $arr_img[$k])
+						->setCellValue('C'.$i, '0');
+				$i = $i + 1;
+						
+			}
+		
+		}
+		
+			
+			
 //***********************************************************************************************************
 
 //***********************************************************************************************************
@@ -265,12 +290,13 @@ require_once dirname(__FILE__) . '/lib/sql.php';
 	// подключаемся к SQL серверу
 	$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
 
-		$query = 'select tovar_id,catalog_id,parent_id,name,brand,memo1,memo2 from bitrixshop.tovar';	
+		$query = 'select id,tovar_id,catalog_id,parent_id,name,brand,memo1,memo2,img_main,img_med,weight,price from bitrixshop.tovar';	
 		
 		$result = mysqli_query($link, $query);
 		
 		while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 			
+				$arr[$i]["id"] 			= $row["id"];
 				$arr[$i]["tovar_id"] 	= $row["tovar_id"];
 				$arr[$i]["catalog_id"] 	= $row["catalog_id"];
 				$arr[$i]["parent_id"] 	= $row["parent_id"];
@@ -278,6 +304,10 @@ require_once dirname(__FILE__) . '/lib/sql.php';
 				$arr[$i]["brand"] 		= $row["brand"];
 				$arr[$i]["memo1"] 		= $row["memo1"];
 				$arr[$i]["memo2"] 		= $row["memo2"];
+				$arr[$i]["img_main"] 	= $row["img_main"];
+				$arr[$i]["img_med"] 	= $row["img_med"];
+				$arr[$i]["weight"] 		= $row["weight"];
+				$arr[$i]["price"] 		= $row["price"];
 				$i = $i + 1;
 				
 		}
@@ -287,4 +317,14 @@ require_once dirname(__FILE__) . '/lib/sql.php';
 	$link->close();
 
 	return $arr;
+}
+
+function img_pars ($str_in) {		//Функция разбора строки с разделителем |
+	
+	$arr = array();
+	
+	$arr = explode("|",$str_in);
+	
+	return $arr;
+	
 }
