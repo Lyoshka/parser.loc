@@ -18,11 +18,11 @@
 		$limit = "";			//" LIMIT 120,20";	// Лимит выборки страниц (для тестирования), если надо выбрать все, то $limit = ""
 		
 		$arr_all = array(
-			array("Товары для собак","http://www.petshop.ru/catalog/dogs/"),
-			array("Товары для кошек","http://www.petshop.ru/catalog/cats/"),
-			array("Для грызунов и хорьков","http://www.petshop.ru/catalog/rodents/"),
-			array("Товары для рыб","http://www.petshop.ru/catalog/fish/"),
-			array("Товары для птиц","http://www.petshop.ru/catalog/birds/")
+			array("1","Товары для собак","http://www.petshop.ru/catalog/dogs/"),
+			array("2","Товары для кошек","http://www.petshop.ru/catalog/cats/"),
+			array("3","Для грызунов и хорьков","http://www.petshop.ru/catalog/rodents/"),
+			array("4","Товары для рыб","http://www.petshop.ru/catalog/fish/"),
+			array("5","Товары для птиц","http://www.petshop.ru/catalog/birds/")
 		);
 
 		$site = 'http://www.petshop.ru';	
@@ -32,6 +32,11 @@
 //	Процедура копирования карточек товаров 
 //*******************************************************************************************************
 function start_get_tovar() {
+	
+		global $host;
+		global $user;
+		global $password;
+		global $database;	
 
 		ob_start();
 		
@@ -144,15 +149,7 @@ function start_get_catalog() {
 		ob_flush();
 		flush();
 		
-	for ($cat=0;$cat<5;$cat++) {
-		
-		$arr_link = get_category ($arr_all[$cat][2]);
-		
-		
-		$k = 0;
-		$arr_to_sql = array();
-		
-		
+				
 		// подключаемся к SQL серверу
 		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
 		
@@ -163,6 +160,23 @@ function start_get_catalog() {
 		$query = 'DELETE from bitrixshop.load_catalog';
 		$result = mysqli_query($link, $query);
 		
+		mysqli_free_result($result);
+		//Закрываем соединение с БД 
+		mysqli_close($link);
+
+
+		
+	for ($cat=0;$cat<5;$cat++) {
+		
+		$arr_link = get_category ($arr_all[$cat][2]);
+		
+		
+		$k = 0;
+		$arr_to_sql = array();
+		
+		// подключаемся к SQL серверу
+		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
+
 		
 		$query = 'select max(id_cat) as count from bitrixshop.catalog';	//Берем максимальное значение ID каталога
 		
@@ -203,6 +217,8 @@ function start_get_catalog() {
 		
 		}
 		
+		
+		
 		save_load_catalog($arr_to_sql);
 		echo "Catalog:" . $cat . " load: " . $k . " <br>";
 		ob_flush();
@@ -238,13 +254,31 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 				$s2   = $arr_tovar[$j]["catalog_id"];
 				$s3   = $arr_tovar[$j]["link"];
 				$s4	  = $arr_tovar[$j]["parent_id"];
+				$new = 0;
 			
-				$query = 'select exist (select 1 from bitrixshop.tovar where tovar_id = ' . $s1 . ')'; // Ищем ID товара в таблице Tovar если не найден, то добавляем в таблицу Compare
+				$query = 'select DISTINCT tovar_id from bitrixshop.tovar where tovar_id = ' . $s1 ; // Ищем ID товара в таблице Tovar если не найден, то добавляем в таблицу Compare
 				$result = mysqli_query($link, $query);
 				
+				while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+				
+					$new = $row['tovar_id'];
+				}
+				
+				
+				$query = 'select DISTINCT tovar_id from bitrixshop.compare where tovar_id = ' . $s1; // Ищем ID товара в таблице Tovar если не найден, то добавляем в таблицу Compare
+				$result = mysqli_query($link, $query);
+				
+				
+				while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+				
+					$new = $row['tovar_id'];
+				}
+				
+
+
 				$commit = $commit + 1;	//Счетчик коммитов. Коммитим через 50 записей
 				
-				if ($result == 0) {
+				if ($new == null) {
 					
 					//Здесь инсертим в базу новые ID товаров для последующей загрузки
 					
@@ -260,7 +294,7 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 						$res = mysqli_query($link, $query);
 						$commit = 0;
 						flush();
-						//echo $i . "<br>";
+						echo $i . "<br>";
 					}
 					
 				}
@@ -268,6 +302,8 @@ function compare_tovar ($catalog_id) {		//Функция поиска новых
 				
 			}
 		echo "Catalog: " . $s2 . " всего товаров: " . $i . "<br>";
+		ob_flush();
+		flush();
 		//Закрываем соединение с БД 
 		mysqli_close($link);
 	
@@ -295,6 +331,8 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
 		$html = curl_get($url);
 
 		$dom = str_get_html($html);
+		
+	if ($dom != null) {
 		
 		$arr_tovar["tovar_id"] = $tovar_id;
 		$arr_tovar["catalog_id"] = $catalog_id;
@@ -487,7 +525,9 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
 
 			}
 
-
+	} else {
+		echo "Function: get_tovar(). Нет данных HTML на входе. DOM = NULL <br>";
+	}
 		
 		
 		

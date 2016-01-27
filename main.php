@@ -94,47 +94,52 @@
 
 		
 		if ( isset ( $_POST['button1'] )) {		//Export Catalog to Excel
-	
+			ob_start();
 			echo '<script>
 			document.all.proc1.innerHTML = "'. catalog_to_xlsx () .' ";
-			</script>'; 
+			</script>';
+			ob_flush();
 			flush();
 	
 		}
 
 		if ( isset ( $_POST['button2'] )) {		//Export Tovar to Excel
-	
+			ob_start();
 			echo '<script>
 			document.all.proc2.innerHTML = "'. tovar_to_xlsx () .' ";
 			</script>'; 
+			ob_flush();
 			flush();
 
 		}
 
 		if ( isset ( $_POST['button3'] )) {		//Compare Tovar
-	
+			ob_start();
 			echo '<script>
 			document.all.proc3.innerHTML = "'. start_compare_tovar() .' ";
 			</script>'; 
+			ob_flush();
 			flush();
 
 		}
 
 		if ( isset ( $_POST['button4'] )) {		//Load Catalog
-	
+			ob_start();
 			echo '<script>
 			document.all.proc4.innerHTML = "'. start_get_catalog() .' ";
 			</script>'; 
+			ob_flush();
 			flush();
 
 		}
 
 		if ( isset ( $_POST['button5'] )) {		//Load Tovar
-	
+			ob_start();
 			echo "Start Load Tovar:";
 			echo '<script>
 			document.all.proc5.innerHTML = "'. start_get_tovar() .' ";
 			</script>'; 
+			ob_flush();
 			flush();
 
 		}

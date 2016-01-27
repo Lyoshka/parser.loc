@@ -15,8 +15,6 @@ $proxy = '188.165.141.151:80';  	//Finland
 
 
 
-//$proxy = '10.247.19.22:9090';
-$proxyauth = 'spb\eav:recf40vehf}|';
 
 $header  = array
 (
