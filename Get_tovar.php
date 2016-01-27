@@ -10,8 +10,8 @@
 		include_once('lib\curl_query.php');
 		include_once('lib\simple_html_dom.php');
 		
-		$save_dir = 'D:/OpenServer/domains/parser.loc/img/';		//Директория для сохранения файлов
-		$img_download = false;	// Скачивать картинки или нет		
+		$save_dir = 'D:/OpenServer/domains/opencart.loc/image/catalog/';		//Директория для сохранения файлов
+		$img_download = true;	// Скачивать картинки или нет		
 		
 		
 		$k = 0;					// Индекс в массиве $arr_all по которому производимм выборку
@@ -26,24 +26,33 @@
 		);
 
 		$site = 'http://www.petshop.ru';	
-		$url = 'http://www.petshop.ru/catalog/dogs/syxoi/vzroslye_1_6let/new_dlya_vzroslyh_sobak_malyh_porod_do_10_kg_10mes_8let_mini_adult_892/';
 	
 
 //*******************************************************************************************************
 //	Процедура копирования карточек товаров 
 //*******************************************************************************************************
 		ob_start();
+		
+		echo "Start script: " . date("H:i:s") . "<br>";
+		ob_flush();
+		flush();
 
 		// подключаемся к SQL серверу
 		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
-		$id_catalog = 6;
+		//$id_catalog = 6;
 
-		$query = 'select tovar_id,catalog,parent_id,link from bitrixshop.compare where catalog = ' . $id_catalog . ' LIMIT 5'; 
+		$query = 'select tovar_id,catalog,parent_id,link from bitrixshop.compare'; // LIMIT 200'; 
 		$result = mysqli_query($link, $query);
+		
+		$i = 0;
 
 		while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
 
 			get_tovar($row['link'],$row['tovar_id'],$row['catalog'],$row['parent_id']);
+			
+			$i = $i + 1;
+			
+			echo "Load: " . $i . " Tovar_id: " . $row['tovar_id'] . " Catalog: " . $row['catalog'] . "<br>";
 			ob_flush();
 			flush();
 				
@@ -52,7 +61,10 @@
 		
 		//Закрываем соединение с БД 
 		mysqli_close($link);
-			
+		
+		echo "Stop script: " . date("H:i:s") . "<br>";
+		ob_flush();
+		flush();
 		ob_end_clean(); 
 	
 //*******************************************************************************************************
@@ -411,12 +423,18 @@ function save_tovar_to_SQL ($arr) {		//Функция сохранения в Б
 		$res = mysqli_query($link,$query);
 		if ($res) {
 			// Удаляем из таблицы "На загрузку" (Compare)
-			$query = "DELETE FROM Bitrixshop.Compare WHERE tovar_id = " . s1;
-			//$res = mysqli_query($link,$query);
+			$query = "DELETE FROM Bitrixshop.Compare WHERE tovar_id = " . $s1;
+			$res = mysqli_query($link,$query);
+			
+			if (!$res) {
+				echo "Ошибка удаления из таблицы Compare данных: " . $query . "<br>";
+			}
+			
 		} else {
 			echo "Ошибка загрузки данных: " . $query . "<br>";
 		}
-
+		ob_flush();
+		flush();
 
 		//Закрываем соединение с БД 
 		mysqli_close($link);
