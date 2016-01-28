@@ -18,11 +18,11 @@
 		$limit = "";			//" LIMIT 120,20";	// Лимит выборки страниц (для тестирования), если надо выбрать все, то $limit = ""
 		
 		$arr_all = array(
-			array("1","Товары для собак","http://www.petshop.ru/catalog/dogs/"),
-			array("2","Товары для кошек","http://www.petshop.ru/catalog/cats/"),
-			array("3","Для грызунов и хорьков","http://www.petshop.ru/catalog/rodents/"),
-			array("4","Товары для рыб","http://www.petshop.ru/catalog/fish/"),
-			array("5","Товары для птиц","http://www.petshop.ru/catalog/birds/")
+			array("Товары для собак","http://www.petshop.ru/catalog/dogs/"),
+			array("Товары для кошек","http://www.petshop.ru/catalog/cats/"),
+			array("Для грызунов и хорьков","http://www.petshop.ru/catalog/rodents/"),
+			array("Товары для рыб","http://www.petshop.ru/catalog/fish/"),
+			array("Товары для птиц","http://www.petshop.ru/catalog/birds/")
 		);
 
 		$site = 'http://www.petshop.ru';	
@@ -32,11 +32,6 @@
 //	Процедура копирования карточек товаров 
 //*******************************************************************************************************
 function start_get_tovar() {
-	
-		global $host;
-		global $user;
-		global $password;
-		global $database;	
 
 		ob_start();
 		
@@ -80,161 +75,23 @@ function start_get_tovar() {
 //	Процедура сравнения товаров (поиск новых товаров и добавления в "таблицу готовых к загрузке")
 //*******************************************************************************************************
 function start_compare_tovar() {
-	
-		global $host;
-		global $user;
-		global $password;
-		global $database;	
-
-	
 		ob_start();
 		
-		echo "Запускаем процедуру загрузки каталогов<br>";
-		echo "Start script: " . date("H:i:s") . "<br>";
-		ob_flush();
-		flush();
-		
-		// Загружаем каталоги
-		start_get_catalog();
-
-		// Определяем кол-во загруженных каталогов
-		// подключаемся к SQL серверу
-		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
-
-		$query = 'select max(id_cat) as count from bitrixshop.catalog';	//Берем максимальное значение ID каталога
-		
-		$result = mysqli_query($link, $query);
-		
-		while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
-			
-				$id_max = $row["count"];
-				
-		}
-		mysqli_free_result($result);
-		
-		//Закрываем соединение с БД 
-		mysqli_close($link);
-
-
-		
-		for ($i=6;$i<=$id_max;$i++) {  // 6 - $id_max  каталоги по каторым необходимо произвести сравнение
+		for ($i=6;$i<=42;$i++) {  // 6 - 42 каталоги по каторым необходимо произвести сравнение
 			
 			compare_tovar($i);
 			ob_flush();
 			flush();
 		}
 		
-		echo "Stop script: " . date("H:i:s") . "<br>";
-		ob_flush();
-		flush();
 		ob_end_clean(); 
-
 		
 }
 
 //*******************************************************************************************************
-//	Процедура загрузки каталогов
-//*******************************************************************************************************
-
-function start_get_catalog() {		
-	
-		global $host;
-		global $user;
-		global $password;
-		global $database;	
-		global $arr_all;
-	
-		ob_start();
-		echo "Start script: " . date("H:i:s") . "<br>";
-		ob_flush();
-		flush();
-		
-				
-		// подключаемся к SQL серверу
-		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
-		
-		//Чистим каталоги
-		$query = 'DELETE from bitrixshop.catalog WHERE parent_id <> 0';
-		$result = mysqli_query($link, $query);
-		
-		$query = 'DELETE from bitrixshop.load_catalog';
-		$result = mysqli_query($link, $query);
-		
-		//Закрываем соединение с БД 
-		mysqli_close($link);
-
 
 		
-	for ($cat=0;$cat<5;$cat++) {
-		
-		$arr_link = get_category ($arr_all[$cat][2]);
-		
-		
-		$k = 0;
-		$arr_to_sql = array();
-		
-		// подключаемся к SQL серверу
-		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
-
-		
-		$query = 'select max(id_cat) as count from bitrixshop.catalog';	//Берем максимальное значение ID каталога
-		
-		$result = mysqli_query($link, $query);
-		
-		while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
-			
-				$id_max = $row["count"];
-				
-		}
-		mysqli_free_result($result);
-		
-		//Закрываем соединение с БД 
-		mysqli_close($link);
-
-		
-		for ($j=0;$j<count($arr_link);$j++) {		
-		
-			$name = $arr_link[$j][0];
-			$arr_cat_link = $arr_link[$j][1];
-			$id_max = $id_max + 1;
-			
-			
-			//Сохраняем каталог Catalog
-			save_catalog ($id_max,$arr_all[$cat][0],$name);
-			
-			for ($i=0;$i<count($arr_cat_link);$i++) {
-			
-				$arr_to_sql[$k][0] = $id_max;						//ID каталога
-				$arr_to_sql[$k][1] = (int) $arr_all[$cat][0];		//ID родительского каталога	
-				$arr_to_sql[$k][2] = $name;							//Название каталога
-				$arr_to_sql[$k][3] = $arr_cat_link[$i];				//Ссылка на страницу
-				
-				$k = $k + 1;
-				
-			}
-			
-		
-		}
-		
-		
-		
-		save_load_catalog($arr_to_sql);
-		echo "Catalog:" . $cat . " load: " . $k . " <br>";
-		ob_flush();
-		flush();
-
-	}	
-	//ob_end_clean(); 
-	echo "End script: " . date("H:i:s");
-}
-
-
-
-//*******************************************************************************************************
-//Функция поиска новых товаров на сайте и скачки ID товара в таблицу (Compare) "Товары на загрузку"
-//*******************************************************************************************************
-
-function compare_tovar ($catalog_id) {		
+function compare_tovar ($catalog_id) {		//Функция поиска новых товаров на сайте и скачки ID товара в таблицу "Товары на загрузку"
 	
 		global $host;
 		global $user;
@@ -246,32 +103,7 @@ function compare_tovar ($catalog_id) {
 
 		$i = 0;
 		$commit = 0;
-		$version = 0;
-		
-		// Получаем текущую версию загруженных данных
-		$query = 'select value from bitrixshop.system where name = "version"';
-		$result = mysqli_query($link, $query);
-				
-			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
-				$version = $row['value'];
-			}
-
-
-		
 		$arr_tovar = list_item($catalog_id);	// Получаем массив ID товаров по каталогу с сайта
-		
-		
-		// Проверяем версию товара
-		$query = 'select 1 from bitrixshop.tovar where version != "' . $version . '" union select 1 from bitrixshop.compare where version != "' . $version . '"';
-		$result = mysqli_query($link, $query);
-		
-		if ( mysqli_num_rows($result) == 0 ) {
-			
-			$version = $version + 1;
-			$query = 'UPDATE bitrixshop.system set value = "' . $version . '" where name = "version"';
-			$result = mysqli_query($link, $query);
-			
-		}
 		
 		
 			for ($j=0;$j<count($arr_tovar);$j++) {
@@ -280,27 +112,17 @@ function compare_tovar ($catalog_id) {
 				$s2   = $arr_tovar[$j]["catalog_id"];
 				$s3   = $arr_tovar[$j]["link"];
 				$s4	  = $arr_tovar[$j]["parent_id"];
-				
 			
-				$query = 'select 1 from bitrixshop.tovar where tovar_id = "' . $s1 . '" union select 1 from bitrixshop.compare where tovar_id = "' . $s1 . '"';
+				$query = 'select exist (select 1 from bitrixshop.tovar where tovar_id = ' . $s1 . ')'; // Ищем ID товара в таблице Tovar если не найден, то добавляем в таблицу Compare
 				$result = mysqli_query($link, $query);
-		
-				if ( mysqli_num_rows($result) == 0 ) {
-					$new = 1;
-				} else {
-					$query = 'UPDATE bitrixshop.compare set version = "' . $version . '" where tovar_id = "' . $s1 . '"';
-					$result = mysqli_query($link, $query);
-					$query = 'UPDATE bitrixshop.tovar set version = "' . $version . '" where tovar_id = "' . $s1 . '"';
-					$result = mysqli_query($link, $query);
-				}
-
+				
 				$commit = $commit + 1;	//Счетчик коммитов. Коммитим через 50 записей
 				
-				if ($new == 1) {
+				if ($result == 0) {
 					
 					//Здесь инсертим в базу новые ID товаров для последующей загрузки
 					
-					$query = "INSERT INTO Bitrixshop.compare (`tovar_id`,`version`,`parent_id`,`catalog`,`link`) VALUES ('" . $s1 . "','" . $version . "','" . $s4 . "','" . $s2 . "','" . $s3 . "')"; 
+					$query = "INSERT INTO Bitrixshop.compare (`tovar_id`,`parent_id`,`catalog`,`link`) VALUES ('" . $s1 . "','" . $s4 . "','" . $s2 . "','" . $s3 . "')"; 
 					
 					$res = mysqli_query($link, $query);
 					if (!$res) {
@@ -312,7 +134,7 @@ function compare_tovar ($catalog_id) {
 						$res = mysqli_query($link, $query);
 						$commit = 0;
 						flush();
-						echo $i . "<br>";
+						//echo $i . "<br>";
 					}
 					
 				}
@@ -320,18 +142,13 @@ function compare_tovar ($catalog_id) {
 				
 			}
 		echo "Catalog: " . $s2 . " всего товаров: " . $i . "<br>";
-		ob_flush();
-		flush();
 		//Закрываем соединение с БД 
 		mysqli_close($link);
 	
 }
 	
-//*******************************************************************************************************
-//Функция скачивания файла изображения
-//*******************************************************************************************************		
-
-function save_img ($img_url) {		
+		
+function save_img ($img_url) {		//Функция скачивания файла изображения
 		
 		global $save_dir;
 
@@ -342,11 +159,7 @@ function save_img ($img_url) {
 		
 }
 		
-//*******************************************************************************************************
-// Функция парсинга катрочки товара
-//*******************************************************************************************************
-
-function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		
+function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {		// Функция парсинга катрочки товара
 
 		global $img_download;
 		$arr_tovar = array();	// Массив товаров
@@ -356,8 +169,6 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {
 		$html = curl_get($url);
 
 		$dom = str_get_html($html);
-		
-	if ($dom != null) {
 		
 		$arr_tovar["tovar_id"] = $tovar_id;
 		$arr_tovar["catalog_id"] = $catalog_id;
@@ -550,9 +361,7 @@ function get_tovar ($url, $tovar_id = '0', $catalog_id = 0, $parent_id = 0 ) {
 
 			}
 
-	} else {
-		echo "Function: get_tovar(). Нет данных HTML на входе. DOM = NULL <br>";
-	}
+
 		
 		
 		
@@ -589,11 +398,7 @@ function save_art_to_SQL ($arr) {		//Функция сохранения в БД
 
 */
 
-//*******************************************************************************************************
-// Функция сохранения в БД товаров
-//*******************************************************************************************************
-
-function save_tovar_to_SQL ($arr) {		
+function save_tovar_to_SQL ($arr) {		//Функция сохранения в БД товаров
 	
 		global $host;
 		global $user;
@@ -723,188 +528,6 @@ function getItem($url,$catalog_id = 0) {	//Доп. функция для list_it
 		return $arr_tovar;
 		
 }	
-
-
-		
-function save_catalog ($cat_id,$par_id,$name) {		//Функция сохранения каталога
-	
-		global $host;
-		global $user;
-		global $password;
-		global $database;	
-
-		// подключаемся к SQL серверу
-		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
-
-
-			$query = "INSERT INTO bitrixshop.catalog (`id_cat`,`parent_id`,`name`) VALUES ('" . $cat_id . "','" . $par_id . "','" . $name . "');";
-			$result = mysqli_query($link,$query);
-			if (!$result) {
-				echo "Ошибка загрузки данных: " . $query . "<br>";
-			}
-
-		//Закрываем соединение с БД 
-		mysqli_close($link);
-	
-}
-	
-
-function save_load_catalog($arr) {		//Функция сохранения категори в БД
-
-		global $host;
-		global $user;
-		global $password;
-		global $database;	
-
-		// подключаемся к SQL серверу
-		$link = mysqli_connect($host, $user, $password, $database) or die("Ошибка " . mysqli_error($link));
- 
-		$i = 0;
-		
-		for ($j=0;$j<count($arr);$j++){
-			$s1 = mysqli_real_escape_string($link,$arr[$i][0]);
-			$s2 = mysqli_real_escape_string($link,$arr[$i][1]);
-			$s3 = mysqli_real_escape_string($link,$arr[$i][2]);
-			$s4 = mysqli_real_escape_string($link,$arr[$i][3]);
-			
-			
-
-			//Сохраняем в таблицу ссылок на страницы каталога
-			$query = "INSERT INTO bitrixshop.load_catalog (`id_cat`,`parent_id`,`lvl1`,`link`) VALUES ('" . $s1 . "','" . $s2 . "','" . $s3. "','" . $s4 . "');";
-			$result = mysqli_query($link,$query);
-			if ($result) {
-				$i = $i+1; 
-			} else {
-				echo "Ошибка загрузки данных: " . $query . "<br>";
-			}
-			
-		}
-
-
-		//echo "В БД загружено " . $i . " записей";
-		
-		//Закрываем соединение с БД 
-		mysqli_close($link);
-
-}
-//*********************************************************************************************************************		
-		
-		
-		
-function get_category ($url) {			//Функция получения категорий и ссылок на все страницы товара
-	
-		$arr_cat = get_lvl_1($url);		//Массив ссылок 1-го уровня
-		$arr_link = array();
-		
-		if (count($arr_cat) != 0) {
-			
-			
-			for ($j=0;$j<count($arr_cat);$j++) {
-				
-				$arr_link[$j][0] = $arr_cat[$j][0];						//Название категории
-				$arr_link[$j][1] = get_page_count($arr_cat[$j][1]);		//Массив ссылок на страницы категории
-				
-			}
-			
-		} else {
-			echo "Function get_category(): ERROR. Входящи массив get_lvl_1() пустой<br>";
-		}
-		
-		
-		
-	return $arr_link;
-	
-}
-		
-	
-		
-function get_page_count($url){	//Функция определения кол-ва страниц с товарами
-	
-		global $site;
-		
-		$html = curl_get($url);
-		
-		$arr_page = array();
-		
-		$arr_page[] = $url;
-		
-		$dom = str_get_html($html);
-		
-	if ($dom != null) {
-		
-		$pages = $dom->find('.page-navigation',0);
-
-		
-		if ($pages != null) {	//Проверяем наличие дополнительных страниц
-		
-				if ($pages->find('a[class="dots"]') == null) {		//Проверяем наличие большого кол-ва страниц
-				
-						$container = $pages->find('a[class!="next"]');
-						
-						foreach($container as $item){
-							
-							$arr_page[] = $site . $item->href;
-							
-						}
-				} else {	//Много страниц, присутствуют свернутые номера страниц
-				
-					$a = $pages->find('a[!class]',0); //Получили кол-во страниц с товарами
-					
-					$page_count = $a -> plaintext;
-					
-					for ($i=2;$i<=$page_count;$i++) {
-						
-						$arr_page[] = $url . "?page=" . $i;
-						
-					}
-					
-				}
-		}
-		
-	} else {	
-		echo "Function: get_page_count(). Нет данных HTML на входе. DOM = NULL <br>";
-	}
-	
-		return $arr_page;
-	
-}
-		
-function get_lvl_1($url) {	//Функция получения массива ссылок 1-го уровня
-
-		global $site;		
-		$html = curl_get($url);
-		
-		$arr_level11 = array();
-		$arr_level_1 = array();
-		
-		$dom = str_get_html($html);
-		
-		
-	if ($dom != null) {
-		
-		$container = $dom->find('.submenu-list a');
-		
-		$i = 0;
-		
-		foreach($container as $item){
-			
-			
-			//echo $site . $item->href . '  ' . $item->plaintext . '<br>';
-				$arr_level11[0] = $item->plaintext;
-				$arr_level11[1] = $site . $item->href;
-				
-				$arr_level_1[$i] = $arr_level11;
-				$i = $i + 1;
-			
-		}
-	} else {
-		echo "Function: get_lvl_1(). Нет данных HTML на входе. DOM = NULL <br>";
-	}
-	//Поучили 1-й уровень 
-	
-	return $arr_level_1;
-	
-}
 
 
 ?>

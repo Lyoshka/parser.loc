@@ -1,0 +1,19 @@
+CREATE TABLE `System` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(50) NOT NULL,
+	`value` VARCHAR(50) NOT NULL,
+	PRIMARY KEY (`id`),
+	INDEX `id` (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=2
+;
+
+
+ALTER TABLE `Tovar`
+	ADD COLUMN `version` INT NOT NULL AFTER `id`;
+
+
+ALTER TABLE `Compare`
+	ADD COLUMN `version` INT NOT NULL AFTER `id`;
